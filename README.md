@@ -96,7 +96,7 @@ The API will be available at `http://localhost:8080`.
 2. Create a new project
 3. Navigate to **APIs & Services > Credentials**
 4. Click **Create Credentials > OAuth 2.0 Client ID**
-5. Set **Authorized Redirect URIs**: `https://oauth.pstmn.io/v1/callback`
+5. Set **Authorized Redirect URIs**: `https://oauth.pstmn.io/v1/callback` for postman testing
 6. Copy **Client ID** and update `application.properties` file
 
 ### Step 2: Frontend Authentication
