@@ -4,6 +4,7 @@ package com.tasks.tma.service;
 import com.tasks.tma.dtos.UserRequestDTO;
 import com.tasks.tma.dtos.AuthenticationRequest;
 import com.tasks.tma.dtos.AuthenticationResponse;
+import com.tasks.tma.exception.ResourceNotFoundException;
 import com.tasks.tma.exception.UniqueConstraintViolationException;
 import com.tasks.tma.mappers.UserMapper;
 import com.tasks.tma.models.User;
@@ -13,56 +14,51 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
 
-    private final  UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final UserMapper userMapper;
+    private final AuthenticationManager authenticationManager;
 
-    private final  PasswordEncoder passwordEncoder;
-
-    private final  JwtService jwtService;
-
-    private final  UserMapper userMapper;
-
-    private final  AuthenticationManager authenticationManager;
-
-    private final  UserDetailsService userDetailsService;
-    
-    public AuthenticationResponse register(UserRequestDTO request){
+    public AuthenticationResponse register(UserRequestDTO request) {
         try {
-            User userEntity = userMapper.userDtoTouser(request);
+            User user = userMapper.userDtoTouser(request);
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-            userEntity.setPassword(passwordEncoder.encode(request.getPassword()));
-            User user = userRepository.save(userEntity);
-            final String jwtToken = jwtService.generateToken(user.getUsername());
-
-            return new AuthenticationResponse(jwtToken);
+            user = userRepository.save(user);
+            return createAuthenticationResponse(user);
         } catch (DataIntegrityViolationException e) {
-            throw new UniqueConstraintViolationException("Phone number or email already exists");
+            throw new UniqueConstraintViolationException("Phone number or email already exists" );
         }
-
     }
 
-    public AuthenticationResponse authenticat(AuthenticationRequest request) throws Exception  {
+    public AuthenticationResponse authenticate(AuthenticationRequest request) {
         try {
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(),
-                     request.getPassword())
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
         } catch (BadCredentialsException e) {
-            throw new IllegalArgumentException("Incorrect Email or password", e);
+            throw new IllegalArgumentException("Incorrect email or password", e);
         }
 
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
-        final String jwtToken = jwtService.generateToken(userDetails.getUsername());
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        return new AuthenticationResponse(jwtToken);
+        return createAuthenticationResponse(user);
     }
 
+    private AuthenticationResponse createAuthenticationResponse(User user) {
+        String jwtToken = jwtService.generateToken(user.getUsername());
+        return new AuthenticationResponse(jwtToken, user.getId());
+    }
 }
+

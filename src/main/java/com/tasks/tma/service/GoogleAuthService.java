@@ -34,7 +34,7 @@ public class GoogleAuthService {
             User user = findOrCreateUserByEmail(email);
             String jwtToken = generateJwtToken(user);
 
-            return new AuthenticationResponse(jwtToken);
+            return new AuthenticationResponse(jwtToken,user.getId());
         } catch (Exception e) {
             throw new RuntimeException("Token validation failed", e);
         }

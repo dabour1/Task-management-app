@@ -32,7 +32,7 @@ public class AuthenticationController {
     
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> login(@RequestBody @Valid AuthenticationRequest request) throws Exception {
-        return ResponseEntity.ok(authenticationService.authenticat(request)) ;
+        return ResponseEntity.ok(authenticationService.authenticate(request)) ;
     }
     @PostMapping("/google")
     public ResponseEntity<?> login(@RequestBody @Valid GoogleAuthDTO googleAuthDTO) throws Exception {

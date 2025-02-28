@@ -1,12 +1,12 @@
 package com.tasks.tma.dtos;
 
+import lombok.AllArgsConstructor;
 import lombok.Data ;
 
+import java.util.UUID;
+@AllArgsConstructor
 @Data
 public class AuthenticationResponse {
     private String token;
-    public AuthenticationResponse(String token) {
-        this.token = token;
-    }
-
+    private UUID userId;
 }
